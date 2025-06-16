@@ -43,7 +43,7 @@ export class McpWebviewProvider implements vscode.WebviewViewProvider {
             summary: request.summary,
             timestamp: request.timestamp,
             startTime: new Date(),
-            timeoutMs: 600000 // 10 minutes
+            timeoutMs: 300000 // 5 minutes
         };
 
         this.pendingRequests.set(request.id, pendingRequest);

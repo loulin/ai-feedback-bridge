@@ -10,3 +10,13 @@ vite.config.js
 **/*.ts
 !out/**/*.js 
 reference/**
+tests/**
+node_modules/**
+.git/**
+*.log
+npm-debug.log*
+.npm
+.eslintcache
+jest.config.js
+esbuild.config.js
+.lingma/**

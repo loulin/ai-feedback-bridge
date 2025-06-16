@@ -35,11 +35,11 @@ export function createMcpServerWithFeedback(
             timestamp: new Date()
           };
 
-          // Set up timeout (10 minutes)
+          // Set up timeout (5 minutes)
           const timer = setTimeout(() => {
             pendingRequests.delete(requestId);
             reject(new Error('Request timeout - no user response received'));
-          }, 600000);
+          }, 300000);
 
           // Store the pending request
           pendingRequests.set(requestId, {
