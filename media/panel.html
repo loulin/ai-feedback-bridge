@@ -46,7 +46,7 @@
             font-size: 11px;
             cursor: pointer;
             transition: all 0.2s ease;
-            display: none; /* 默认隐藏，只在服务器停止时显示 */
+            display: none; /* Hidden by default, only shown when server is stopped */
         }
         
         .restart-button:hover {
@@ -66,11 +66,11 @@
         .conversations-container {
             flex: 1;
             overflow-y: auto;
-            padding: 8px 16px 8px 32px; /* 左侧留出AI头像空间 */
-            padding-bottom: 0; /* 移除固定的底部边距 */
+            padding: 8px 16px 8px 32px; /* Leave space for AI avatar on the left */
+            padding-bottom: 0; /* Remove fixed bottom margin */
             background: var(--vscode-editor-background);
             scroll-behavior: smooth;
-            margin-bottom: var(--input-area-height, 80px); /* 动态底部边距 */
+            margin-bottom: var(--input-area-height, 80px); /* Dynamic bottom margin */
         }
         
         .conversations {
@@ -174,7 +174,7 @@
         }
         
         .completed::after {
-            content: "✅ 已完成";
+            content: "✅ Completed";
             position: absolute;
             top: 8px;
             right: 8px;
@@ -219,7 +219,7 @@
             word-wrap: break-word;
         }
         
-        /* AI请求与用户回复的对话气泡区分 */
+        /* Distinguish between AI request and user reply conversation bubbles */
         .ai-request {
             border-left: 3px solid var(--vscode-charts-blue);
         }
@@ -240,7 +240,7 @@
             border: 1px solid var(--vscode-charts-blue);
         }
         
-        /* 取消状态样式 */
+        /* Cancelled status styles */
         .cancelled {
             opacity: 0.7;
             position: relative;
@@ -251,7 +251,7 @@
         }
         
         .cancelled::after {
-            content: "⚠️ 已取消";
+            content: "⚠️ Cancelled";
             position: absolute;
             top: 8px;
             right: 8px;
@@ -272,7 +272,7 @@
             gap: 4px;
         }
         
-        /* 底部固定输入区域 */
+        /* Fixed bottom input area */
         .input-area {
             position: fixed;
             bottom: 0;
@@ -391,7 +391,7 @@
             border-color: var(--vscode-focusBorder);
         }
         
-        /* 滚动条样式 */
+        /* Scrollbar styles */
         .conversations-container::-webkit-scrollbar {
             width: 8px;
         }
@@ -409,7 +409,7 @@
             background: var(--vscode-scrollbarSlider-hoverBackground);
         }
         
-        /* 响应式设计 */
+        /* Responsive design */
         @media (max-width: 600px) {
             .conversations-container {
                 padding: 12px;
@@ -426,8 +426,8 @@
         <div class="status-text" id="statusText">
             🔌 AI Feedback Bridge - Server: Stopped
         </div>
-        <button class="restart-button" id="restartButton" title="重启MCP服务器">
-            🔄 重启
+        <button class="restart-button" id="restartButton" title="Restart MCP Server">
+            🔄 Restart
         </button>
     </div>
     
@@ -435,28 +435,28 @@
         <div class="conversations" id="conversations">
             <div class="empty-state">
                 <div class="empty-state-icon">💬</div>
-                <div>等待 AI 反馈请求...</div>
-                <div style="font-size: 12px; opacity: 0.7;">当 AI 完成任务时会在这里显示</div>
+                <div>Waiting for AI feedback requests...</div>
+                <div style="font-size: 12px; opacity: 0.7;">AI requests will appear here when tasks are completed</div>
             </div>
         </div>
     </div>
     
-    <!-- 底部固定输入区域 -->
+    <!-- Fixed bottom input area -->
     <div class="input-area" id="inputArea">
         <div class="input-container">
             <textarea 
                 id="fixedTextarea" 
                 class="input-textarea"
-                placeholder="等待AI反馈请求... (Enter发送，Ctrl+Enter强制发送)"
+                placeholder="Waiting for AI feedback requests... (Enter to send, Ctrl+Enter to force send)"
             ></textarea>
             <div class="input-buttons">
-                <button class="action-button clear-button" id="clearButton" title="清空所有对话历史记录">
+                <button class="action-button clear-button" id="clearButton" title="Clear all conversation history">
                     <span>🗑️</span>
-                    <span>清空历史</span>
+                    <span>Clear History</span>
                 </button>
-                <button class="action-button send-button" id="fixedSendButton" disabled title="发送反馈">
+                <button class="action-button send-button" id="fixedSendButton" disabled title="Send feedback">
                     <span>➤</span>
-                    <span>发送</span>
+                    <span>Send</span>
                 </button>
             </div>
         </div>

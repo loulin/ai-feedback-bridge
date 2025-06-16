@@ -6,7 +6,7 @@ import { EventEmitter } from "events";
 import { UserFeedbackRequest, PendingRequest } from './types.js';
 
 /**
- * 创建MCP服务器实例，并注册interactive_feedback工具
+ * Create MCP server instance and register interactive_feedback tool
  */
 export function createMcpServerWithFeedback(
     eventEmitter: EventEmitter,

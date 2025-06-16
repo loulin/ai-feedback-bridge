@@ -1,0 +1,16 @@
+{
+  "displayName": "AI反馈桥接器",
+  "description": "AI客户端与VSCode之间的交互反馈桥梁，支持实时协作",
+  "command.start.title": "启动MCP服务器",
+  "command.stop.title": "停止MCP服务器",
+  "command.restart.title": "重启MCP服务器",
+  "command.openPanel.title": "打开AI桥接面板",
+  "category.aiBridge": "AI桥接",
+  "viewContainer.title": "AI反馈桥接器",
+  "view.panel.name": "AI交互面板",
+  "config.title": "AI反馈桥接器",
+  "config.server.port.description": "MCP HTTP服务器端口",
+  "config.server.timeout.description": "MCP服务器超时时间（毫秒）",
+  "config.ui.autoOpen.description": "扩展激活时自动打开AI桥接面板",
+  "config.i18n.language.description": "扩展语言设置（auto: 从VSCode自动检测，en: 英语，zh-cn: 中文）"
+} 

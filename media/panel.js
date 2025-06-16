@@ -1,9 +1,9 @@
 const vscode = acquireVsCodeApi();
 let autoScrollEnabled = true;
 let currentRequestId = null;
-let countdownTimers = new Map(); // 存储倒计时定时器
-let requestsData = new Map(); // 存储请求数据
-let isComposing = false; // 跟踪输入法状态
+let countdownTimers = new Map(); // Store countdown timers
+let requestsData = new Map(); // Store request data
+let isComposing = false; // Track IME composition state
 
 window.addEventListener('message', event => {
     const message = event.data;
@@ -46,12 +46,12 @@ function updateServerStatus(running) {
 function addFeedbackRequest(request) {
     const conversations = document.getElementById('conversations');
     
-    // 如果有当前活跃的请求，先取消它
+    // If there's a currently active request, cancel it first
     if (currentRequestId) {
         cancelPreviousRequest(currentRequestId);
     }
     
-    // 存储请求数据
+    // Store request data
     requestsData.set(request.id, request);
     
     const emptyState = conversations.querySelector('.empty-state');
@@ -63,7 +63,7 @@ function addFeedbackRequest(request) {
     requestDiv.className = 'feedback-request ai-request';
     requestDiv.id = 'request-' + request.id;
     
-    const timestamp = new Date(request.timestamp).toLocaleString('zh-CN', {
+    const timestamp = new Date(request.timestamp).toLocaleString('en-US', {
         year: 'numeric',
         month: '2-digit',
         day: '2-digit',
@@ -74,12 +74,12 @@ function addFeedbackRequest(request) {
     
     requestDiv.innerHTML = `
         <div class="request-header">
-            <div class="request-timestamp">AI请求 • ${timestamp}</div>
+            <div class="request-timestamp">AI Request • ${timestamp}</div>
             <div class="request-summary">${request.summary}</div>
         </div>
         <div class="request-body">
             <div class="countdown-info" id="countdown-${request.id}">
-                <span class="countdown-text">⏱️ 等待回复中...</span>
+                <span class="countdown-text">⏱️ Waiting for reply...</span>
                 <span class="countdown-timer" id="timer-${request.id}"></span>
             </div>
         </div>
@@ -87,14 +87,14 @@ function addFeedbackRequest(request) {
     
     conversations.appendChild(requestDiv);
     
-    // 设置当前请求ID并显示输入区域
+    // Set current request ID and show input area
     currentRequestId = request.id;
     showInputArea(request);
     
-    // 启动倒计时
+    // Start countdown
     startCountdown(request.id, request.startTime, request.timeoutMs);
     
-    // 自动滚动到新消息
+    // Auto scroll to new message
     if (autoScrollEnabled) {
         scrollToBottom();
     }
@@ -103,15 +103,15 @@ function addFeedbackRequest(request) {
 function showInputArea(request) {
     const fixedTextarea = document.getElementById('fixedTextarea');
     
-    // 更新输入框提示，处理换行并截断过长的文本
+    // Update input placeholder, handle line breaks and truncate long text
     const summaryForPlaceholder = request.summary
-        .replace(/\n+/g, ' ')  // 将换行符替换为空格
-        .substring(0, 30)      // 截断到30个字符
+        .replace(/\n+/g, ' ')  // Replace line breaks with spaces
+        .substring(0, 30)      // Truncate to 30 characters
         .trim();
     
-    fixedTextarea.placeholder = `回复: ${summaryForPlaceholder}... (Enter发送，Ctrl+Enter强制发送)`;
+    fixedTextarea.placeholder = `Reply: ${summaryForPlaceholder}... (Enter to send, Ctrl+Enter to force send)`;
     
-    // 聚焦到输入框并更新按钮状态
+    // Focus to input box and update button state
     setTimeout(() => {
         fixedTextarea.focus();
         updateSendButtonState();
@@ -122,27 +122,27 @@ function hideInputArea() {
     const fixedTextarea = document.getElementById('fixedTextarea');
     
     fixedTextarea.value = '';
-    fixedTextarea.placeholder = '等待AI反馈请求...';
+    fixedTextarea.placeholder = 'Waiting for AI feedback requests...';
     currentRequestId = null;
     updateSendButtonState();
 }
 
 function handleFixedTextareaKeydown(event) {
-    // Ctrl+Enter 强制发送（绕过输入法检测）
+    // Ctrl+Enter force send (bypass IME detection)
     if (event.key === 'Enter' && event.ctrlKey) {
         event.preventDefault();
         sendFixedResponse();
         return;
     }
     
-    // 普通 Enter 键发送 (非Shift+Enter，且不在输入法输入中)
+    // Normal Enter key send (not Shift+Enter, and not in IME composition)
     if (event.key === 'Enter' && !event.shiftKey && !isComposing) {
         event.preventDefault();
         sendFixedResponse();
         return;
     }
     
-    // 实时更新按钮状态和高度
+    // Real-time update button state and height
     setTimeout(() => {
         updateSendButtonState();
         autoResizeTextarea();
@@ -155,14 +155,14 @@ function autoResizeTextarea() {
     const newHeight = Math.min(textarea.scrollHeight, 120);
     textarea.style.height = newHeight + 'px';
     
-    // 如果达到最大高度，显示滚动条
+    // If max height reached, show scrollbar
     if (textarea.scrollHeight > 120) {
         textarea.style.overflowY = 'auto';
     } else {
         textarea.style.overflowY = 'hidden';
     }
     
-    // 动态调整对话容器的底部边距
+    // Dynamically adjust conversation container bottom margin
     updateConversationsMargin();
 }
 
@@ -177,7 +177,7 @@ function updateSendButtonState() {
 
 function sendFixedResponse() {
     if (!currentRequestId) {
-        return; // 按钮应该是禁用状态
+        return; // Button should be disabled
     }
     
     const textarea = document.getElementById('fixedTextarea');
@@ -185,21 +185,21 @@ function sendFixedResponse() {
     const response = textarea.value.trim();
     
     if (!response) {
-        return; // 按钮应该是禁用状态
+        return; // Button should be disabled
     }
 
-    // 发送反馈
+    // Send feedback
     vscode.postMessage({
         type: 'respondToFeedback',
         id: currentRequestId,
         response: response
     });
     
-    // 立即标记为已发送状态并清空输入
-    button.innerHTML = '<span>⏳</span><span>发送中</span>';
+    // Immediately mark as sent and clear input
+    button.innerHTML = '<span>⏳</span><span>Sending</span>';
     button.disabled = true;
     textarea.value = '';
-    autoResizeTextarea(); // 重置高度
+    autoResizeTextarea(); // Reset height
 }
 
 function markRequestCompleted(requestId, userResponse, responseTime) {
@@ -207,40 +207,40 @@ function markRequestCompleted(requestId, userResponse, responseTime) {
     if (requestDiv) {
         requestDiv.classList.add('completed');
         
-        // 计算响应时间
+        // Calculate response time
         const request = findRequestData(requestId);
         if (request) {
             const calculatedResponseTime = new Date().getTime() - new Date(request.startTime).getTime();
             stopCountdown(requestId, calculatedResponseTime);
             
-            // 添加用户回复区域
+            // Add user response area
             if (userResponse && userResponse.trim()) {
                 addUserResponse(requestDiv, userResponse, responseTime || new Date().toISOString());
             }
         }
     }
     
-    // 如果是当前请求，显示成功状态并重置
+    // If this is the current request, show success status and reset
     if (currentRequestId === requestId) {
         const button = document.getElementById('fixedSendButton');
         if (button) {
-            button.innerHTML = '<span>✅</span><span>已发送</span>';
+            button.innerHTML = '<span>✅</span><span>Sent</span>';
         }
         
-        // 延迟重置，让用户看到成功状态
+        // Delay reset to let user see success status
         setTimeout(() => {
             hideInputArea();
-            // 重置按钮状态
+            // Reset button state
             const resetButton = document.getElementById('fixedSendButton');
             if (resetButton) {
-                resetButton.innerHTML = '<span>➤</span><span>发送</span>';
+                resetButton.innerHTML = '<span>➤</span><span>Send</span>';
             }
         }, 1500);
     }
 }
 
 function addUserResponse(requestDiv, responseText, responseTime) {
-    const responseTimestamp = new Date(responseTime).toLocaleString('zh-CN', {
+    const responseTimestamp = new Date(responseTime).toLocaleString('en-US', {
         year: 'numeric',
         month: '2-digit',
         day: '2-digit',
@@ -254,7 +254,7 @@ function addUserResponse(requestDiv, responseText, responseTime) {
     userResponseDiv.innerHTML = `
         <div class="user-response-header">
             <span class="user-response-icon">👤</span>
-            <span>用户回复</span>
+            <span>User Reply</span>
             <span class="user-response-time">${responseTimestamp}</span>
         </div>
         <div class="user-response-content">${escapeHtml(responseText)}</div>
@@ -262,13 +262,13 @@ function addUserResponse(requestDiv, responseText, responseTime) {
     
     requestDiv.appendChild(userResponseDiv);
     
-    // 自动滚动到新回复
+    // Auto scroll to new reply
     if (autoScrollEnabled) {
         setTimeout(() => scrollToBottom(), 100);
     }
 }
 
-// HTML转义函数，防止XSS攻击
+// HTML escape function to prevent XSS attacks
 function escapeHtml(text) {
     const div = document.createElement('div');
     div.textContent = text;
@@ -277,7 +277,7 @@ function escapeHtml(text) {
 
 function confirmClearHistory() {
     console.log('confirmClearHistory called');
-    // 直接发送清空请求，让VSCode扩展端处理确认
+    // Send clear request directly, let VSCode extension handle confirmation
     vscode.postMessage({
         type: 'requestClearHistory'
     });
@@ -286,7 +286,7 @@ function confirmClearHistory() {
 
 function handleRestartServer() {
     console.log('handleRestartServer called');
-    // 发送重启服务器请求
+    // Send restart server request
     vscode.postMessage({
         type: 'restartServer'
     });
@@ -294,25 +294,25 @@ function handleRestartServer() {
 }
 
 function clearConversations() {
-    // 清理所有定时器
+    // Clean up all timers
     for (const timer of countdownTimers.values()) {
         clearInterval(timer);
     }
     countdownTimers.clear();
     
-    // 清理请求数据
+    // Clean up request data
     requestsData.clear();
     
     const conversations = document.getElementById('conversations');
     conversations.innerHTML = `
         <div class="empty-state">
             <div class="empty-state-icon">💬</div>
-            <div>等待 AI 反馈请求...</div>
-            <div style="font-size: 12px; opacity: 0.7;">当 AI 完成任务时会在这里显示</div>
+            <div>Waiting for AI feedback requests...</div>
+            <div style="font-size: 12px; opacity: 0.7;">AI task completion will appear here</div>
         </div>
     `;
     
-    // 清空历史时不应该清空用户输入，只重置当前请求ID
+    // When clearing history, don't clear user input, only reset current request ID
     currentRequestId = null;
     updateSendButtonState();
 }
@@ -323,15 +323,15 @@ function scrollToBottom() {
 }
 
 function showError(message) {
-    // 创建更优雅的错误提示
+    // Create more elegant error notification
     const conversations = document.getElementById('conversations');
     const errorDiv = document.createElement('div');
     errorDiv.className = 'feedback-request';
     errorDiv.style.borderColor = 'var(--vscode-inputValidation-errorBorder)';
     errorDiv.innerHTML = `
         <div class="request-header" style="background: var(--vscode-inputValidation-errorBackground);">
-            <div class="request-timestamp">${new Date().toLocaleString('zh-CN')}</div>
-            <div class="request-summary">❌ 错误信息</div>
+            <div class="request-timestamp">${new Date().toLocaleString('en-US')}</div>
+            <div class="request-summary">❌ Error Message</div>
         </div>
         <div class="request-body">
             <div style="color: var(--vscode-errorForeground); padding: 12px; background: var(--vscode-inputValidation-errorBackground); border-radius: 4px;">
@@ -343,26 +343,26 @@ function showError(message) {
     conversations.appendChild(errorDiv);
     scrollToBottom();
     
-    // 5秒后自动移除错误消息
+    // Auto remove error message after 5 seconds
     setTimeout(() => {
         errorDiv.remove();
     }, 5000);
 }
 
-// 监听用户滚动，智能控制自动滚动
+// Listen to user scroll, intelligently control auto scroll
 document.getElementById('conversationsContainer').addEventListener('scroll', function() {
     const container = this;
     const isAtBottom = container.scrollTop + container.clientHeight >= container.scrollHeight - 10;
     autoScrollEnabled = isAtBottom;
 });
 
-// 监听输入框变化，实时更新按钮状态和高度
+// Listen to input changes, real-time update button state and height
 document.getElementById('fixedTextarea').addEventListener('input', function() {
     updateSendButtonState();
     autoResizeTextarea();
 });
 
-// 添加输入法状态监听
+// Add IME status listeners
 document.getElementById('fixedTextarea').addEventListener('compositionstart', function() {
     isComposing = true;
     console.log('[Panel] Composition started - IME active');
@@ -373,13 +373,13 @@ document.getElementById('fixedTextarea').addEventListener('compositionend', func
     console.log('[Panel] Composition ended - IME inactive');
 });
 
-// 添加按键监听
+// Add keydown listeners
 document.getElementById('fixedTextarea').addEventListener('keydown', handleFixedTextareaKeydown);
 
-// 添加按钮点击监听
+// Add button click listeners
 document.getElementById('fixedSendButton').addEventListener('click', sendFixedResponse);
 
-// 确保DOM加载完成后再绑定清空按钮事件
+// Ensure DOM is loaded before binding clear button events
 document.addEventListener('DOMContentLoaded', function() {
     const clearButton = document.getElementById('clearButton');
     if (clearButton) {
@@ -397,14 +397,14 @@ document.addEventListener('DOMContentLoaded', function() {
         console.error('restartButton not found in DOM');
     }
     
-    // 初始化对话容器边距
+    // Initialize conversation container margins
     updateConversationsMargin();
     
-    // 主动请求服务器状态
+    // Actively request server status
     requestServerStatus();
 });
 
-// 备用方案：直接绑定（如果DOM已经加载）
+// Backup solution: bind directly (if DOM already loaded)
 const clearButton = document.getElementById('clearButton');
 if (clearButton) {
     clearButton.addEventListener('click', confirmClearHistory);
@@ -417,17 +417,17 @@ if (restartButton) {
     console.log('restartButton event listener added via backup method');
 }
 
-// 如果DOM已经加载，立即调用初始化
+// If DOM already loaded, immediately call initialization
 if (document.readyState === 'loading') {
-    // DOM还在加载中，等待DOMContentLoaded事件
+    // DOM still loading, wait for DOMContentLoaded event
 } else {
-    // DOM已经加载完成
+    // DOM already loaded
     updateConversationsMargin();
-    // 主动请求服务器状态
+    // Actively request server status
     requestServerStatus();
 }
 
-// 页面加载完成后主动请求服务器状态
+// Actively request server status after page loaded
 function requestServerStatus() {
     console.log('Requesting server status...');
     vscode.postMessage({
@@ -435,7 +435,7 @@ function requestServerStatus() {
     });
 }
 
-// 倒计时功能
+// Countdown functionality
 function startCountdown(requestId, startTimeStr, timeoutMs) {
     const startTime = new Date(startTimeStr);
     const endTime = new Date(startTime.getTime() + timeoutMs);
@@ -450,7 +450,7 @@ function startCountdown(requestId, startTimeStr, timeoutMs) {
         const timeLeft = endTime.getTime() - now.getTime();
         
         if (timeLeft <= 0) {
-            timerElement.textContent = '⏰ 超时';
+            timerElement.textContent = '⏰ Timeout';
             timerElement.style.color = 'var(--vscode-errorForeground)';
             clearInterval(timer);
             countdownTimers.delete(requestId);
@@ -461,58 +461,58 @@ function startCountdown(requestId, startTimeStr, timeoutMs) {
         const seconds = Math.floor((timeLeft % 60000) / 1000);
         timerElement.textContent = `${minutes}:${seconds.toString().padStart(2, '0')}`;
         
-        // 剩余时间少于30秒时变为警告色
+        // Change to warning color when less than 30 seconds remaining
         if (timeLeft < 30000) {
             timerElement.style.color = 'var(--vscode-editorWarning-foreground)';
         }
     };
     
-    // 立即更新一次
+    // Update immediately once
     updateTimer();
     
-    // 设置定时器
+    // Set timer
     const timer = setInterval(updateTimer, 1000);
     countdownTimers.set(requestId, timer);
 }
 
 function stopCountdown(requestId, responseTime) {
-    // 清除定时器
+    // Clear timer
     const timer = countdownTimers.get(requestId);
     if (timer) {
         clearInterval(timer);
         countdownTimers.delete(requestId);
     }
     
-    // 更新显示为响应时间
+    // Update display to response time
     const countdownElement = document.getElementById(`countdown-${requestId}`);
     if (countdownElement) {
         const minutes = Math.floor(responseTime / 60000);
         const seconds = Math.floor((responseTime % 60000) / 1000);
-        const timeStr = minutes > 0 ? `${minutes}分${seconds}秒` : `${seconds}秒`;
+        const timeStr = minutes > 0 ? `${minutes}m ${seconds}s` : `${seconds}s`;
         
         countdownElement.innerHTML = `
-            <span class="response-time">✅ 已回复，用时: ${timeStr}</span>
+            <span class="response-time">✅ Replied, Time taken: ${timeStr}</span>
         `;
     }
 }
 
 function cancelPreviousRequest(requestId) {
-    // 停止倒计时
+    // Stop countdown
     const timer = countdownTimers.get(requestId);
     if (timer) {
         clearInterval(timer);
         countdownTimers.delete(requestId);
     }
     
-    // 更新显示状态
+    // Update display status
     const countdownElement = document.getElementById(`countdown-${requestId}`);
     if (countdownElement) {
         countdownElement.innerHTML = `
-            <span class="cancelled-status">⚠️ 已取消 - 收到新的反馈请求</span>
+            <span class="cancelled-status">⚠️ Cancelled - New feedback request received</span>
         `;
     }
     
-    // 标记为已取消状态
+    // Mark as cancelled status
     const requestDiv = document.getElementById('request-' + requestId);
     if (requestDiv) {
         requestDiv.classList.add('cancelled');
@@ -533,7 +533,7 @@ function updateConversationsMargin() {
         const inputAreaHeight = inputArea.offsetHeight;
         conversationsContainer.style.marginBottom = inputAreaHeight + 'px';
         
-        // 确保滚动位置正确
+        // Ensure scroll position is correct
         if (autoScrollEnabled) {
             setTimeout(() => {
                 scrollToBottom();
@@ -542,7 +542,7 @@ function updateConversationsMargin() {
     }
 }
 
-// 监听窗口大小变化，确保布局正确
+// Listen to window resize, ensure correct layout
 window.addEventListener('resize', function() {
     updateConversationsMargin();
 }); 

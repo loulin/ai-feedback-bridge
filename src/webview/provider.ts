@@ -48,7 +48,7 @@ export class McpWebviewProvider implements vscode.WebviewViewProvider {
 
         this.pendingRequests.set(request.id, pendingRequest);
 
-        // 显示请求给用户
+        // Display request to user
         if (this._view) {
             this._view.webview.postMessage({
                 type: 'feedbackRequest',
@@ -59,7 +59,7 @@ export class McpWebviewProvider implements vscode.WebviewViewProvider {
                 timeoutMs: pendingRequest.timeoutMs
             });
 
-            // 焦点到面板
+            // Focus to panel
             this._view.show();
         }
     }
@@ -76,7 +76,7 @@ export class McpWebviewProvider implements vscode.WebviewViewProvider {
 
     public resolveWebviewView(
         webviewView: vscode.WebviewView,
-        context: vscode.WebviewViewResolveContext,
+        _context: vscode.WebviewViewResolveContext,
         _token: vscode.CancellationToken,
     ) {
         this._view = webviewView;
@@ -90,7 +90,7 @@ export class McpWebviewProvider implements vscode.WebviewViewProvider {
 
         webviewView.webview.html = this._getHtmlForWebview(webviewView.webview);
 
-        // 监听webview可见性变化，重新同步状态
+        // Listen for webview visibility changes, re-sync status
         webviewView.onDidChangeVisibility(() => {
             if (webviewView.visible) {
                 console.log('[WebviewProvider] Webview became visible, updating server status');
@@ -98,7 +98,7 @@ export class McpWebviewProvider implements vscode.WebviewViewProvider {
             }
         });
 
-        // 处理来自Webview的消息
+        // Handle messages from Webview
         webviewView.webview.onDidReceiveMessage(async (data) => {
             switch (data.type) {
                 case 'respondToFeedback':
@@ -116,7 +116,7 @@ export class McpWebviewProvider implements vscode.WebviewViewProvider {
             }
         });
 
-        // 发送服务器状态 - 检查服务器是否真正在运行
+        // Send server status - check if server is actually running
         const isServerRunning = this.mcpServer && this.mcpServer.getBaseUrl() !== null;
         webviewView.webview.postMessage({
             type: 'serverStatus',
@@ -143,7 +143,7 @@ export class McpWebviewProvider implements vscode.WebviewViewProvider {
         }
 
         try {
-            // 构建回复内容
+            // Build reply content
             const content: any[] = [];
             
             if (response.trim()) {
@@ -153,20 +153,20 @@ export class McpWebviewProvider implements vscode.WebviewViewProvider {
                 });
             }
 
-            // 创建用户反馈响应
+            // Create user feedback response
             const userResponse: UserFeedbackResponse = {
                 id: id,
                 content: content,
                 timestamp: new Date()
             };
 
-            // 通过MCP服务器发送响应
+            // Send response through MCP server
             this.mcpServer.respondToFeedback(id, userResponse);
 
-            // 清理请求
+            // Clean up request
             this.pendingRequests.delete(id);
 
-            // 通知UI请求已完成，并传递用户回复内容
+            // Notify UI that request is completed and pass user reply content
             this._view?.webview.postMessage({
                 type: 'requestCompleted',
                 id: id,
@@ -186,12 +186,12 @@ export class McpWebviewProvider implements vscode.WebviewViewProvider {
         console.log('handleRequestClearHistory called');
         
         const result = await vscode.window.showInformationMessage(
-            '确定要清空所有对话历史记录吗？此操作不可撤销。',
+            'Are you sure you want to clear all conversation history? This action cannot be undone.',
             { modal: true },
-            '确定'
+            'Confirm'
         );
         
-        if (result === '确定') {
+        if (result === 'Confirm') {
             console.log('User confirmed, clearing history');
             await this.handleClearHistory();
         } else {
@@ -202,9 +202,9 @@ export class McpWebviewProvider implements vscode.WebviewViewProvider {
     private async handleClearHistory(): Promise<void> {
         console.log('handleClearHistory called');
         
-        // 清理所有待处理请求
+        // Clean up all pending requests
         for (const [id] of this.pendingRequests) {
-            // 通知MCP服务器取消请求
+            // Notify MCP server to cancel request
             if (this.mcpServer) {
                 this.mcpServer.cancelFeedback(id, 'Cancelled by user');
             }
@@ -221,7 +221,7 @@ export class McpWebviewProvider implements vscode.WebviewViewProvider {
     private async handleRestartServer(): Promise<void> {
         console.log('handleRestartServer called');
         
-        // 直接调用VSCode命令来重启服务器
+        // Directly call VSCode command to restart server
         try {
             await vscode.commands.executeCommand('mcpExtension.restart');
         } catch (error) {
@@ -234,18 +234,18 @@ export class McpWebviewProvider implements vscode.WebviewViewProvider {
     }
 
     private _getHtmlForWebview(webview: vscode.Webview): string {
-        // 获取 JS 文件的 URI（从 media 目录）
+        // Get JS file URI (from media directory)
         const jsUri = webview.asWebviewUri(
             vscode.Uri.joinPath(this._extensionUri, 'media', 'panel.js')
         );
         
-        // 读取 HTML 文件内容（从 media 目录）
+        // Read HTML file content (from media directory)
         const fs = require('fs');
         const path = require('path');
         const htmlPath = path.join(this._extensionUri.fsPath, 'media', 'panel.html');
         let html = fs.readFileSync(htmlPath, 'utf8');
         
-        // 替换 JS 文件路径为正确的 webview URI
+        // Replace JS file path with correct webview URI
         html = html.replace('src="panel.js"', `src="${jsUri}"`);
         
         return html;

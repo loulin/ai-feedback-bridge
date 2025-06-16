@@ -1,0 +1,16 @@
+{
+  "displayName": "AI Feedback Bridge",
+  "description": "Bridge between AI clients and VSCode for interactive feedback and real-time collaboration",
+  "command.start.title": "Start MCP Server",
+  "command.stop.title": "Stop MCP Server",
+  "command.restart.title": "Restart MCP Server",
+  "command.openPanel.title": "Open AI Bridge Panel",
+  "category.aiBridge": "AI Bridge",
+  "viewContainer.title": "AI Feedback Bridge",
+  "view.panel.name": "AI Interactive Panel",
+  "config.title": "AI Feedback Bridge",
+  "config.server.port.description": "MCP HTTP server port",
+  "config.server.timeout.description": "MCP server timeout in milliseconds",
+  "config.ui.autoOpen.description": "Automatically open AI Bridge panel when extension activates",
+  "config.i18n.language.description": "Language for the extension (auto: detect from VSCode, en: English, zh-cn: Chinese)"
+} 

@@ -1,8 +1,8 @@
 {
   "name": "ai-feedback-bridge",
-  "displayName": "AI Feedback Bridge",
-  "description": "Bridge between AI clients and VSCode for interactive feedback and real-time collaboration",
-  "version": "1.0.0",
+  "displayName": "%displayName%",
+  "description": "%description%",
+  "version": "1.1.0",
   "publisher": "loulin",
   "icon": "media/icon.png",
   "license": "MIT",
@@ -38,30 +38,30 @@
     "commands": [
       {
         "command": "mcpExtension.start",
-        "title": "Start MCP Server",
-        "category": "AI Bridge"
+        "title": "%command.start.title%",
+        "category": "%category.aiBridge%"
       },
       {
         "command": "mcpExtension.stop",
-        "title": "Stop MCP Server",
-        "category": "AI Bridge"
+        "title": "%command.stop.title%",
+        "category": "%category.aiBridge%"
       },
       {
         "command": "mcpExtension.openPanel",
-        "title": "Open AI Bridge Panel",
-        "category": "AI Bridge"
+        "title": "%command.openPanel.title%",
+        "category": "%category.aiBridge%"
       },
       {
         "command": "mcpExtension.restart",
-        "title": "Restart MCP Server",
-        "category": "AI Bridge"
+        "title": "%command.restart.title%",
+        "category": "%category.aiBridge%"
       }
     ],
     "viewsContainers": {
       "activitybar": [
         {
           "id": "mcpContainer",
-          "title": "AI Feedback Bridge",
+          "title": "%viewContainer.title%",
           "icon": "$(plug)"
         }
       ]
@@ -70,28 +70,38 @@
       "mcpContainer": [
         {
           "id": "mcpPanel",
-          "name": "AI Interactive Panel",
+          "name": "%view.panel.name%",
           "type": "webview"
         }
       ]
     },
     "configuration": {
-      "title": "AI Feedback Bridge",
+      "title": "%config.title%",
       "properties": {
         "mcpExtension.server.port": {
           "type": "number",
           "default": 8765,
-          "description": "MCP HTTP server port"
+          "description": "%config.server.port.description%"
         },
         "mcpExtension.server.timeout": {
           "type": "number",
           "default": 300000,
-          "description": "MCP server timeout in milliseconds (default: 300000ms/5分钟)"
+          "description": "%config.server.timeout.description%"
         },
         "mcpExtension.ui.autoOpen": {
           "type": "boolean",
           "default": true,
-          "description": "Automatically open AI Bridge panel when extension activates"
+          "description": "%config.ui.autoOpen.description%"
+        },
+        "mcpExtension.i18n.language": {
+          "type": "string",
+          "enum": [
+            "auto",
+            "en",
+            "zh-cn"
+          ],
+          "default": "auto",
+          "description": "%config.i18n.language.description%"
         }
       }
     }
@@ -114,6 +124,7 @@
     "package:dev": "vsce package --pre-release"
   },
   "devDependencies": {
+    "@eslint/js": "^9.29.0",
     "@types/eventsource": "^3.0.0",
     "@types/express": "^5.0.3",
     "@types/jest": "^30.0.0",
@@ -137,6 +148,7 @@
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.12.3",
+    "vscode-nls": "^5.2.0",
     "zod": "^3.25.64"
   }
 }

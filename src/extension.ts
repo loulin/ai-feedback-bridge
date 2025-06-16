@@ -1,17 +1,21 @@
 import * as vscode from 'vscode';
 import { McpWebviewProvider } from './webview/provider';
 import { MCPFeedbackServer } from './server';
+import { Messages, I18nManager } from './i18n';
 
 let mcpServer: MCPFeedbackServer | undefined;
 let webviewProvider: McpWebviewProvider | undefined;
 
 export function activate(context: vscode.ExtensionContext) {
+    // Initialize i18n manager
+    const i18nManager = I18nManager.getInstance();
     console.log('AI Feedback Bridge is now active!');
+    console.log(`Language detected: ${i18nManager.getCurrentLanguage()}`);
 
-    // 创建Webview Provider
+    // Create Webview Provider
     webviewProvider = new McpWebviewProvider(context.extensionUri);
     
-    // 注册Webview Provider
+    // Register Webview Provider
     context.subscriptions.push(
         vscode.window.registerWebviewViewProvider(
             'mcpPanel',
@@ -20,33 +24,33 @@ export function activate(context: vscode.ExtensionContext) {
         )
     );
 
-    // 注册命令
+    // Register commands
     const startCommand = vscode.commands.registerCommand('mcpExtension.start', async () => {
         try {
             await startMcpServer(context);
-            vscode.window.showInformationMessage('MCP Server started successfully!');
+            vscode.window.showInformationMessage(Messages.serverStarted());
         } catch (error) {
-            vscode.window.showErrorMessage(`Failed to start MCP Server: ${error}`);
+            vscode.window.showErrorMessage(Messages.serverStartFailed(String(error)));
         }
     });
 
     const stopCommand = vscode.commands.registerCommand('mcpExtension.stop', async () => {
         try {
             await stopMcpServer();
-            vscode.window.showInformationMessage('MCP Server stopped successfully!');
+            vscode.window.showInformationMessage(Messages.serverStoppedSuccess());
         } catch (error) {
-            vscode.window.showErrorMessage(`Failed to stop MCP Server: ${error}`);
+            vscode.window.showErrorMessage(Messages.serverStopFailed(String(error)));
         }
     });
 
     const restartCommand = vscode.commands.registerCommand('mcpExtension.restart', async () => {
         try {
             await stopMcpServer();
-            await new Promise(resolve => setTimeout(resolve, 1000)); // 等待1秒确保完全停止
+            await new Promise(resolve => setTimeout(resolve, 1000)); // Wait 1 second to ensure complete shutdown
             await startMcpServer(context);
-            vscode.window.showInformationMessage('MCP Server restarted successfully!');
+            vscode.window.showInformationMessage(Messages.serverRestarted());
         } catch (error) {
-            vscode.window.showErrorMessage(`Failed to restart MCP Server: ${error}`);
+            vscode.window.showErrorMessage(Messages.serverRestartFailed(String(error)));
         }
     });
 
@@ -56,7 +60,7 @@ export function activate(context: vscode.ExtensionContext) {
 
     context.subscriptions.push(startCommand, stopCommand, restartCommand, openPanelCommand);
 
-    // 自动启动MCP服务器（如果配置启用）
+    // Auto-start MCP server (if enabled in configuration)
     const config = vscode.workspace.getConfiguration('mcpExtension');
     if (config.get<boolean>('ui.autoOpen', true)) {
         startMcpServer(context);
@@ -68,7 +72,7 @@ export function deactivate() {
     return stopMcpServer();
 }
 
-async function startMcpServer(context: vscode.ExtensionContext): Promise<void> {
+async function startMcpServer(_context: vscode.ExtensionContext): Promise<void> {
     if (mcpServer) {
         console.log('MCP Server is already running');
         return;
@@ -79,7 +83,7 @@ async function startMcpServer(context: vscode.ExtensionContext): Promise<void> {
 
     mcpServer = new MCPFeedbackServer();
     
-    // 连接webview provider和MCP服务器
+    // Connect webview provider and MCP server
     if (webviewProvider) {
         webviewProvider.setMcpServer(mcpServer);
     }

@@ -271,7 +271,7 @@ export class MCPFeedbackServer extends EventEmitter {
         }
 
         // Clear pending requests
-        for (const [requestId, pending] of this.pendingRequests) {
+        for (const [, pending] of this.pendingRequests) {
             clearTimeout(pending.timer);
             pending.reject(new Error('Server shutting down'));
         }
