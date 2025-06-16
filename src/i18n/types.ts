@@ -15,9 +15,7 @@ export type LanguagePreference = 'auto' | SupportedLanguage;
 /**
  * Localization resource structure
  */
-export interface LocalizationResources {
-    [key: string]: string;
-}
+export type LocalizationResources = Record<string, string>;
 
 /**
  * i18n configuration interface

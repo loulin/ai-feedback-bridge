@@ -30,7 +30,7 @@ export const EnglishResources = {
     'webview.restart': 'Restart',
     'webview.send': 'Send',
     'webview.clear': 'Clear History',
-    'webview.placeholder': 'Type your response here...'
+    'webview.placeholder': 'Type your response here...',
 };
 
 // Chinese resources
@@ -60,7 +60,7 @@ export const ChineseResources = {
     'webview.restart': '重启',
     'webview.send': '发送',
     'webview.clear': '清除历史',
-    'webview.placeholder': '在此输入您的回复...'
+    'webview.placeholder': '在此输入您的回复...',
 };
 
 /**

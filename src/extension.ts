@@ -21,7 +21,7 @@ export function activate(context: vscode.ExtensionContext) {
             'mcpPanel',
             webviewProvider,
             { webviewOptions: { retainContextWhenHidden: true } },
-        )
+        ),
     );
 
     // Register commands
@@ -63,7 +63,7 @@ export function activate(context: vscode.ExtensionContext) {
     // Auto-start MCP server (if enabled in configuration)
     const config = vscode.workspace.getConfiguration('mcpExtension');
     if (config.get<boolean>('ui.autoOpen', true)) {
-        startMcpServer(context);
+        void startMcpServer(context);
     }
 }
 

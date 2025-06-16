@@ -35,6 +35,7 @@ Thumbs.db
 # Development tools
 .cursor/
 .ai/
+.lingma/
 
 # Reference materials (user added)
 reference/

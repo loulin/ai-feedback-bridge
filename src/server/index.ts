@@ -1,13 +1,14 @@
-import { createServer, IncomingMessage, ServerResponse, type Server } from "node:http";
-import { AddressInfo } from "node:net";
-import { randomUUID } from "node:crypto";
-import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
+import type { IncomingMessage, ServerResponse } from 'node:http';
+import { createServer, type Server } from 'node:http';
+import type { AddressInfo } from 'node:net';
+import { randomUUID } from 'node:crypto';
+import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { StreamableHTTPServerTransport } from '@modelcontextprotocol/sdk/server/streamableHttp.js';
 import { isInitializeRequest } from '@modelcontextprotocol/sdk/types.js';
-import { EventEmitter } from "events";
+import { EventEmitter } from 'events';
 import { mcpSSEServer } from './sseServer.js';
 import { createMcpServerWithFeedback } from './mcpServer.js';
-import { UserFeedbackResponse, PendingRequest } from './types.js';
+import type { UserFeedbackResponse, PendingRequest } from './types.js';
 
 /**
  * MCP Server Implementation supporting multiple client connections
@@ -19,10 +20,10 @@ export class MCPFeedbackServer extends EventEmitter {
     private baseUrl: URL | null = null;
     private mcpServer: McpServer | null = null;
     // Map to store transports by session ID for multi-client support
-    private transports: { [sessionId: string]: StreamableHTTPServerTransport } = {};
+    private transports: Record<string, StreamableHTTPServerTransport> = {};
     
     // Map to store pending feedback requests
-    private pendingRequests: Map<string, PendingRequest> = new Map();
+    private pendingRequests = new Map<string, PendingRequest>();
 
     constructor() {
         super();
@@ -37,7 +38,7 @@ export class MCPFeedbackServer extends EventEmitter {
             clearTimeout(pending.timer);
             this.pendingRequests.delete(requestId);
             pending.resolve({
-                content: response.content
+                content: response.content,
             });
             return true;
         }
@@ -47,7 +48,7 @@ export class MCPFeedbackServer extends EventEmitter {
     /**
      * Cancel a pending feedback request
      */
-    public cancelFeedback(requestId: string, error: string = 'Request cancelled'): boolean {
+    public cancelFeedback(requestId: string, error = 'Request cancelled'): boolean {
         const pending = this.pendingRequests.get(requestId);
         if (pending) {
             clearTimeout(pending.timer);
@@ -58,14 +59,15 @@ export class MCPFeedbackServer extends EventEmitter {
         return false;
     }
 
-    async start(port: number = 0, host: string = "127.0.0.1"): Promise<URL> {
+    async start(port = 0, host = '127.0.0.1'): Promise<URL> {
         this.mcpServer = createMcpServerWithFeedback(
             this,
             this.pendingRequests,
         );
         // Create HTTP server
-        this.server = createServer(async (req, res) => {
-            try {
+        this.server = createServer((req, res) => {
+            (async () => {
+                try {
                 // Add CORS headers
                 res.setHeader('Access-Control-Allow-Origin', '*');
                 res.setHeader('Access-Control-Allow-Methods', 'GET, POST, DELETE, OPTIONS');
@@ -96,20 +98,21 @@ export class MCPFeedbackServer extends EventEmitter {
                     await this.handleDeleteRequest(req, res);
                 } else {
                     res.writeHead(405).end(JSON.stringify({
-                        jsonrpc: "2.0",
+                        jsonrpc: '2.0',
                         error: {
                             code: -32000,
-                            message: "Method Not Allowed"
+                            message: 'Method Not Allowed',
                         },
-                        id: null
+                        id: null,
                     }));
                 }
-            } catch (error) {
-                console.error("Error handling request:", error);
-                if (!res.headersSent) {
-                    res.writeHead(500).end();
+                } catch (error) {
+                    console.error('Error handling request:', error);
+                    if (!res.headersSent) {
+                        res.writeHead(500).end();
+                    }
                 }
-            }
+            })().catch(console.error);
         });
 
         // Start server
@@ -160,7 +163,7 @@ export class MCPFeedbackServer extends EventEmitter {
                     onsessioninitialized: (sessionId) => {
                         console.log(`Session initialized with ID: ${sessionId}`);
                         this.transports[sessionId] = transport;
-                    }
+                    },
                 });
 
                 // Set up cleanup when transport closes
@@ -278,7 +281,7 @@ export class MCPFeedbackServer extends EventEmitter {
         this.pendingRequests.clear();
 
         // Close SSE server
-        await mcpSSEServer.cleanup();
+        mcpSSEServer.cleanup();
 
         if (this.server) {
             this.server.close();
@@ -286,7 +289,7 @@ export class MCPFeedbackServer extends EventEmitter {
         }
 
         this.baseUrl = null;
-        console.log("MCP Feedback Server stopped");
+        console.log('MCP Feedback Server stopped');
     }
 
     getBaseUrl(): URL | null {

@@ -4,7 +4,7 @@ import * as nls from 'vscode-nls';
 // Configure vscode-nls
 const localize = nls.config({
     messageFormat: nls.MessageFormat.bundle,
-    bundleFormat: nls.BundleFormat.standalone
+    bundleFormat: nls.BundleFormat.standalone,
 })();
 
 /**
@@ -12,7 +12,7 @@ const localize = nls.config({
  */
 export class I18nManager {
     private static instance: I18nManager;
-    private currentLanguage: string = 'en';
+    private currentLanguage = 'en';
 
     private constructor() {
         this.detectLanguage();
@@ -103,5 +103,5 @@ export const Messages = {
     // General messages
     extensionActivated: () => localize('info.extensionActivated', 'AI Feedback Bridge is now active!'),
     portOccupied: (port: number) => localize('error.portOccupied', 'Port {0} is already in use. Please choose a different port.', port),
-    configurationError: (message: string) => localize('error.configurationError', 'Configuration error: {0}', message)
+    configurationError: (message: string) => localize('error.configurationError', 'Configuration error: {0}', message),
 }; 

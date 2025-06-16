@@ -1,17 +1,17 @@
 import { SSEServerTransport } from '@modelcontextprotocol/sdk/server/sse.js';
-import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
-import { IncomingMessage, ServerResponse } from 'node:http';
+import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
+import type { IncomingMessage, ServerResponse } from 'node:http';
 
 /**
  * SSE-specific MCP Server Implementation
  * Handles Server-Sent Events transport for MCP protocol
  */
 export class MCPSSEServer {
-    private transports: Map<string, SSEServerTransport> = new Map();
+    private transports = new Map<string, SSEServerTransport>();
     /**
      * Handle SSE connection establishment (GET /sse)
      */
-  async handleSSEConnection(req: IncomingMessage, res: ServerResponse, mcpServer: McpServer): Promise<void> {
+    async handleSSEConnection(req: IncomingMessage, res: ServerResponse, mcpServer: McpServer): Promise<void> {
         console.log('Establishing SSE connection');
         
         try {
@@ -31,7 +31,7 @@ export class MCPSSEServer {
                 }
             } else {
                 // Create new SSE transport
-                transport = new SSEServerTransport("/message", res);
+                transport = new SSEServerTransport('/message', res);
                 
                 if (transport.sessionId) {
                     this.transports.set(transport.sessionId, transport);
@@ -110,7 +110,7 @@ export class MCPSSEServer {
     /**
      * Close all transports and cleanup
      */
-    async cleanup(): Promise<void> {
+    cleanup(): void {
         for (const [sessionId, transport] of this.transports) {
             try {
                 console.log(`Closing SSE transport for session ${sessionId}`);

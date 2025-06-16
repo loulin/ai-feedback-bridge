@@ -1,48 +1,68 @@
 const js = require('@eslint/js');
+const tseslint = require('typescript-eslint');
 
-module.exports = [
+module.exports = tseslint.config(
     {
-        ignores: ["out/**", "dist/**", "**/*.d.ts", "jest.config.js", "node_modules/**"]
+        ignores: [
+            "**/out/**",
+            "**/dist/**", 
+            "**/*.d.ts",
+            "**/node_modules/**",
+            "**/.vscode/**",
+            "**/coverage/**",
+            "**/*.vsix"
+        ]
     },
+    
     {
-        files: ["src/**/*.ts"],
+        files: ["**/*.ts", "**/*.tsx"],
+        
+        extends: [
+            js.configs.recommended,
+            ...tseslint.configs.recommendedTypeChecked,
+            ...tseslint.configs.stylistic,
+        ],
+        
         languageOptions: {
-            parser: require('@typescript-eslint/parser'),
+            parser: tseslint.parser,
             parserOptions: {
-                ecmaVersion: 2020,
-                sourceType: "module"
-            },
-            globals: {
-                // Node.js globals
-                console: "readonly",
-                process: "readonly",
-                Buffer: "readonly",
-                __dirname: "readonly",
-                __filename: "readonly",
-                global: "readonly",
-                require: "readonly",
-                module: "readonly",
-                exports: "readonly",
-                setTimeout: "readonly",
-                clearTimeout: "readonly",
-                setInterval: "readonly",
-                clearInterval: "readonly",
-                URL: "readonly",
-                URLSearchParams: "readonly",
-                // Node.js types
-                NodeJS: "readonly"
+                ecmaVersion: 2022,
+                sourceType: "module",
+                project: "./tsconfig.json"
             }
         },
-        plugins: {
-            "@typescript-eslint": require('@typescript-eslint/eslint-plugin')
-        },
+        
         rules: {
-            ...js.configs.recommended.rules,
-            "curly": "warn",
-            "eqeqeq": "warn",
-            "no-throw-literal": "warn",
-            "no-unused-vars": "off",
-            "@typescript-eslint/no-unused-vars": ["warn", { "argsIgnorePattern": "^_" }]
+            "no-console": "off",
+            "@typescript-eslint/no-require-imports": "off",
+            "@typescript-eslint/no-non-null-assertion": "warn",
+            "@typescript-eslint/no-explicit-any": "warn",
+            "@typescript-eslint/no-floating-promises": "warn",
+            "@typescript-eslint/no-misused-promises": "warn",
+            "@typescript-eslint/no-unsafe-assignment": "warn",
+            "@typescript-eslint/no-unsafe-member-access": "warn",
+            "@typescript-eslint/no-unsafe-argument": "warn",
+            "@typescript-eslint/no-unsafe-call": "warn",
+            "@typescript-eslint/no-unsafe-return": "warn",
+            "@typescript-eslint/require-await": "warn",
+            "@typescript-eslint/restrict-template-expressions": "warn",
+            "@typescript-eslint/no-unused-vars": ["warn", { "argsIgnorePattern": "^_" }],
+            "@typescript-eslint/consistent-type-imports": ["warn", { "prefer": "type-imports" }],
+            
+            "comma-dangle": ["warn", "always-multiline"],
+            "object-curly-spacing": ["warn", "always"],
+            "array-bracket-spacing": ["warn", "never"],
+            "quote-props": ["warn", "as-needed"],
+            "prefer-template": "warn",
+            "object-shorthand": "warn",
+        }
+    },
+    
+    {
+        files: ["**/*.test.ts", "**/tests/**/*.ts"],
+        rules: {
+            "@typescript-eslint/no-explicit-any": "off",
+            "@typescript-eslint/no-non-null-assertion": "off"
         }
     }
-]; 
+); 

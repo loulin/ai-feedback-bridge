@@ -115,6 +115,7 @@
     "watch:tsc": "tsc -watch -p ./",
     "pretest": "npm run compile && npm run lint",
     "lint": "eslint src --ext ts",
+    "lint:fix": "eslint src --ext ts --fix",
     "test": "jest tests/server.test.ts",
     "test:watch": "jest tests/server.test.ts --watch",
     "test:coverage": "jest tests/server.test.ts --coverage",
@@ -144,6 +145,7 @@
     "ts-jest": "^29.4.0",
     "ts-node": "^10.9.2",
     "typescript": "^5.8.3",
+    "typescript-eslint": "^8.34.0",
     "undici": "^7.10.0"
   },
   "dependencies": {

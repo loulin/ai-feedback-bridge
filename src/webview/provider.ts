@@ -1,6 +1,6 @@
 import * as vscode from 'vscode';
-import { MCPFeedbackServer } from '../server';
-import { UserFeedbackRequest, UserFeedbackResponse } from '../server/types.js';
+import type { MCPFeedbackServer } from '../server';
+import type { UserFeedbackRequest, UserFeedbackResponse } from '../server/types.js';
 
 interface PendingRequest {
     id: string;
@@ -15,7 +15,7 @@ export class McpWebviewProvider implements vscode.WebviewViewProvider {
     
     private _view?: vscode.WebviewView;
     private mcpServer?: MCPFeedbackServer;
-    private pendingRequests: Map<string, PendingRequest> = new Map();
+    private pendingRequests = new Map<string, PendingRequest>();
 
     constructor(private readonly _extensionUri: vscode.Uri) {}
 
@@ -43,7 +43,7 @@ export class McpWebviewProvider implements vscode.WebviewViewProvider {
             summary: request.summary,
             timestamp: request.timestamp,
             startTime: new Date(),
-            timeoutMs: 300000 // 5 minutes
+            timeoutMs: 300000, // 5 minutes
         };
 
         this.pendingRequests.set(request.id, pendingRequest);
@@ -56,7 +56,7 @@ export class McpWebviewProvider implements vscode.WebviewViewProvider {
                 summary: request.summary,
                 timestamp: request.timestamp.toISOString(),
                 startTime: pendingRequest.startTime.toISOString(),
-                timeoutMs: pendingRequest.timeoutMs
+                timeoutMs: pendingRequest.timeoutMs,
             });
 
             // Focus to panel
@@ -66,10 +66,10 @@ export class McpWebviewProvider implements vscode.WebviewViewProvider {
 
     private updateServerStatus(): void {
         if (this._view) {
-            const isServerRunning = this.mcpServer && this.mcpServer.getBaseUrl() !== null;
+            const isServerRunning = this.mcpServer?.getBaseUrl() !== null;
             this._view.webview.postMessage({ 
                 type: 'serverStatus', 
-                running: isServerRunning 
+                running: isServerRunning, 
             });
         }
     }
@@ -84,8 +84,8 @@ export class McpWebviewProvider implements vscode.WebviewViewProvider {
         webviewView.webview.options = {
             enableScripts: true,
             localResourceRoots: [
-                vscode.Uri.joinPath(this._extensionUri, 'media')
-            ]
+                vscode.Uri.joinPath(this._extensionUri, 'media'),
+            ],
         };
 
         webviewView.webview.html = this._getHtmlForWebview(webviewView.webview);
@@ -102,7 +102,7 @@ export class McpWebviewProvider implements vscode.WebviewViewProvider {
         webviewView.webview.onDidReceiveMessage(async (data) => {
             switch (data.type) {
                 case 'respondToFeedback':
-                    await this.handleFeedbackResponse(data.id, data.response);
+                    this.handleFeedbackResponse(data.id, data.response);
                     break;
                 case 'requestClearHistory':
                     await this.handleRequestClearHistory();
@@ -117,19 +117,19 @@ export class McpWebviewProvider implements vscode.WebviewViewProvider {
         });
 
         // Send server status - check if server is actually running
-        const isServerRunning = this.mcpServer && this.mcpServer.getBaseUrl() !== null;
+        const isServerRunning = this.mcpServer?.getBaseUrl() !== null;
         webviewView.webview.postMessage({
             type: 'serverStatus',
-            running: isServerRunning
+            running: isServerRunning,
         });
     }
 
-    private async handleFeedbackResponse(id: string, response: string): Promise<void> {
+    private handleFeedbackResponse(id: string, response: string): void {
         const request = this.pendingRequests.get(id);
         if (!request) {
             this._view?.webview.postMessage({
                 type: 'error',
-                message: 'Request not found or expired'
+                message: 'Request not found or expired',
             });
             return;
         }
@@ -137,7 +137,7 @@ export class McpWebviewProvider implements vscode.WebviewViewProvider {
         if (!this.mcpServer) {
             this._view?.webview.postMessage({
                 type: 'error',
-                message: 'MCP Server not available'
+                message: 'MCP Server not available',
             });
             return;
         }
@@ -149,15 +149,15 @@ export class McpWebviewProvider implements vscode.WebviewViewProvider {
             if (response.trim()) {
                 content.push({
                     type: 'text',
-                    text: response
+                    text: response,
                 });
             }
 
             // Create user feedback response
             const userResponse: UserFeedbackResponse = {
-                id: id,
-                content: content,
-                timestamp: new Date()
+                id,
+                content,
+                timestamp: new Date(),
             };
 
             // Send response through MCP server
@@ -169,15 +169,15 @@ export class McpWebviewProvider implements vscode.WebviewViewProvider {
             // Notify UI that request is completed and pass user reply content
             this._view?.webview.postMessage({
                 type: 'requestCompleted',
-                id: id,
+                id,
                 userResponse: response,
-                responseTime: new Date().toISOString()
+                responseTime: new Date().toISOString(),
             });
 
         } catch (error) {
             this._view?.webview.postMessage({
                 type: 'error',
-                message: `Failed to send response: ${error}`
+                message: `Failed to send response: ${error}`,
             });
         }
     }
@@ -188,18 +188,18 @@ export class McpWebviewProvider implements vscode.WebviewViewProvider {
         const result = await vscode.window.showInformationMessage(
             'Are you sure you want to clear all conversation history? This action cannot be undone.',
             { modal: true },
-            'Confirm'
+            'Confirm',
         );
         
         if (result === 'Confirm') {
             console.log('User confirmed, clearing history');
-            await this.handleClearHistory();
+            this.handleClearHistory();
         } else {
             console.log('User cancelled clear history');
         }
     }
 
-    private async handleClearHistory(): Promise<void> {
+    private handleClearHistory(): void {
         console.log('handleClearHistory called');
         
         // Clean up all pending requests
@@ -213,7 +213,7 @@ export class McpWebviewProvider implements vscode.WebviewViewProvider {
         console.log('Pending requests cleared');
 
         this._view?.webview.postMessage({
-            type: 'historyCleared'
+            type: 'historyCleared',
         });
         console.log('historyCleared message sent to webview');
     }
@@ -228,7 +228,7 @@ export class McpWebviewProvider implements vscode.WebviewViewProvider {
             console.error('Failed to restart server:', error);
             this._view?.webview.postMessage({
                 type: 'error',
-                message: `Failed to restart server: ${error}`
+                message: `Failed to restart server: ${error}`,
             });
         }
     }
@@ -236,7 +236,7 @@ export class McpWebviewProvider implements vscode.WebviewViewProvider {
     private _getHtmlForWebview(webview: vscode.Webview): string {
         // Get JS file URI (from media directory)
         const jsUri = webview.asWebviewUri(
-            vscode.Uri.joinPath(this._extensionUri, 'media', 'panel.js')
+            vscode.Uri.joinPath(this._extensionUri, 'media', 'panel.js'),
         );
         
         // Read HTML file content (from media directory)
