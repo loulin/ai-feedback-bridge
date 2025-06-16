@@ -1,0 +1,12 @@
+.vscode/**
+.vscode-test/**
+.ai/**
+.cursor/**
+src/**
+.gitignore
+tsconfig.json
+vite.config.js
+**/*.map
+**/*.ts
+!out/**/*.js 
+reference/**

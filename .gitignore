@@ -1,0 +1,40 @@
+# Dependencies
+node_modules/
+
+# Build outputs
+out/
+dist/
+*.vsix
+
+# TypeScript
+*.tsbuildinfo
+
+# Test coverage
+coverage/
+
+# Environment variables
+.env
+.env.local
+
+# Logs
+*.log
+npm-debug.log*
+
+# Cache
+.eslintcache
+.cache/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/settings.json
+.vscode/launch.json
+
+# Development tools
+.cursor/
+.ai/
+
+# Reference materials (user added)
+reference/
