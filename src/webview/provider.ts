@@ -1,5 +1,6 @@
 import * as vscode from 'vscode';
-import { MCPFeedbackServer, UserFeedbackRequest, UserFeedbackResponse } from '../mcpServer/server';
+import { MCPFeedbackServer } from '../server';
+import { UserFeedbackRequest, UserFeedbackResponse } from '../server/types.js';
 
 interface PendingRequest {
     id: string;
@@ -71,16 +72,6 @@ export class McpWebviewProvider implements vscode.WebviewViewProvider {
                 running: isServerRunning 
             });
         }
-    }
-
-    // 这个方法现在不再需要，因为我们使用事件模式
-    public async handleInteractiveFeedback(
-        id: string, 
-        summary: string, 
-        timeout: number = 600000
-    ): Promise<any> {
-        // 这个方法保留兼容性，但实际上不会被调用
-        throw new Error('This method is deprecated - use event-based approach instead');
     }
 
     public resolveWebviewView(

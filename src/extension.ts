@@ -1,6 +1,6 @@
 import * as vscode from 'vscode';
 import { McpWebviewProvider } from './webview/provider';
-import { MCPFeedbackServer } from './mcpServer/server';
+import { MCPFeedbackServer } from './server';
 
 let mcpServer: MCPFeedbackServer | undefined;
 let webviewProvider: McpWebviewProvider | undefined;

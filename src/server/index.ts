@@ -1,25 +1,13 @@
-import { createServer, type Server } from "node:http";
+import { createServer, IncomingMessage, ServerResponse, type Server } from "node:http";
 import { AddressInfo } from "node:net";
 import { randomUUID } from "node:crypto";
+import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { StreamableHTTPServerTransport } from '@modelcontextprotocol/sdk/server/streamableHttp.js';
-import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
-import { CallToolResult, isInitializeRequest } from '@modelcontextprotocol/sdk/types.js';
-import { z } from "zod";
+import { isInitializeRequest } from '@modelcontextprotocol/sdk/types.js';
 import { EventEmitter } from "events";
-
-// 定义用户反馈请求的类型
-export interface UserFeedbackRequest {
-    id: string;
-    summary: string;
-    timestamp: Date;
-}
-
-// 定义用户反馈响应的类型
-export interface UserFeedbackResponse {
-    id: string;
-    content: any[];
-    timestamp: Date;
-}
+import { mcpSSEServer } from './sseServer.js';
+import { createMcpServerWithFeedback } from './mcpServer.js';
+import { UserFeedbackResponse, PendingRequest } from './types.js';
 
 /**
  * MCP Server Implementation supporting multiple client connections
@@ -29,16 +17,12 @@ export interface UserFeedbackResponse {
 export class MCPFeedbackServer extends EventEmitter {
     private server: Server | null = null;
     private baseUrl: URL | null = null;
-    
+    private mcpServer: McpServer | null = null;
     // Map to store transports by session ID for multi-client support
     private transports: { [sessionId: string]: StreamableHTTPServerTransport } = {};
     
     // Map to store pending feedback requests
-    private pendingRequests: Map<string, {
-        resolve: (response: any) => void;
-        reject: (error: Error) => void;
-        timer: NodeJS.Timeout;
-    }> = new Map();
+    private pendingRequests: Map<string, PendingRequest> = new Map();
 
     constructor() {
         super();
@@ -47,7 +31,7 @@ export class MCPFeedbackServer extends EventEmitter {
     /**
      * Register a feedback response handler
      */
-    public respondToFeedback(requestId: string, response: UserFeedbackResponse): void {
+    public respondToFeedback(requestId: string, response: UserFeedbackResponse): boolean {
         const pending = this.pendingRequests.get(requestId);
         if (pending) {
             clearTimeout(pending.timer);
@@ -55,71 +39,30 @@ export class MCPFeedbackServer extends EventEmitter {
             pending.resolve({
                 content: response.content
             });
+            return true;
         }
+        return false;
     }
 
     /**
      * Cancel a pending feedback request
      */
-    public cancelFeedback(requestId: string, error: string = 'Request cancelled'): void {
+    public cancelFeedback(requestId: string, error: string = 'Request cancelled'): boolean {
         const pending = this.pendingRequests.get(requestId);
         if (pending) {
             clearTimeout(pending.timer);
             this.pendingRequests.delete(requestId);
             pending.reject(new Error(error));
+            return true;
         }
-    }
-
-    /**
-     * Creates a new MCP server instance for each client connection
-     */
-    private createMcpServer(): McpServer {
-        const mcpServer = new McpServer(
-            { name: "mcp-feedback-server", version: "1.0.0" },
-            { capabilities: { logging: {} } }
-        );
-
-        // Register interactive feedback tool
-        mcpServer.tool(
-            "interactive_feedback",
-            "Request interactive user feedback during development workflow",
-            { 
-                summary: z.string().describe("Summarize your answer") 
-            },
-            async ({ summary }): Promise<CallToolResult> => {
-                console.log(`Interactive feedback requested: ${summary}`);
-                
-                return new Promise((resolve, reject) => {
-                    const requestId = randomUUID();
-                    const request: UserFeedbackRequest = {
-                        id: requestId,
-                        summary,
-                        timestamp: new Date()
-                    };
-
-                    // Set up timeout (10 minutes)
-                    const timer = setTimeout(() => {
-                        this.pendingRequests.delete(requestId);
-                        reject(new Error('Request timeout - no user response received'));
-                    }, 600000);
-
-                    // Store the pending request
-                    this.pendingRequests.set(requestId, {
-                        resolve,
-                        reject,
-                        timer
-                    });
-
-                    // Emit event for UI layer to handle
-                    this.emit('feedbackRequest', request);
-                });
-            }
-        );
-
-        return mcpServer;
+        return false;
     }
 
     async start(port: number = 0, host: string = "127.0.0.1"): Promise<URL> {
+        this.mcpServer = createMcpServerWithFeedback(
+            this,
+            this.pendingRequests,
+        );
         // Create HTTP server
         this.server = createServer(async (req, res) => {
             try {
@@ -136,7 +79,16 @@ export class MCPFeedbackServer extends EventEmitter {
                     return;
                 }
 
-                if (req.method === 'POST') {
+                // Route based on URL path for SSE support
+                const url = new URL(req.url || '/', `http://${req.headers.host}`);
+                
+                if (url.pathname === '/sse' && req.method === 'GET') {
+                    // SSE connection establishment
+                    await mcpSSEServer.handleSSEConnection(req, res, this.mcpServer!);
+                } else if (url.pathname === '/message' && req.method === 'POST') {
+                    // SSE message handling
+                    await mcpSSEServer.handleSSEMessage(req, res);
+                } else if (req.method === 'POST') {
                     await this.handlePostRequest(req, res);
                 } else if (req.method === 'GET') {
                     await this.handleGetRequest(req, res);
@@ -169,16 +121,18 @@ export class MCPFeedbackServer extends EventEmitter {
         });
 
         console.log(`MCP Feedback Server started at ${this.baseUrl}`);
+        console.log(`  - Stream HTTP: ${this.baseUrl}`);
+        console.log(`  - SSE: ${this.baseUrl}sse`);
         return this.baseUrl;
     }
 
-    private async handlePostRequest(req: any, res: any): Promise<void> {
+    private async handlePostRequest(req: IncomingMessage, res: ServerResponse): Promise<void> {
         console.log('Received MCP POST request');
         
         try {
             // Parse request body
             let body = '';
-            req.on('data', (chunk: any) => {
+            req.on('data', (chunk: Buffer) => {
                 body += chunk.toString();
             });
 
@@ -218,9 +172,7 @@ export class MCPFeedbackServer extends EventEmitter {
                     }
                 };
 
-                // Create and connect new MCP server instance for this client
-                const mcpServer = this.createMcpServer();
-                await mcpServer.connect(transport);
+                await this.mcpServer!.connect(transport);
 
                 // Handle the initialization request
                 await transport.handleRequest(req, res, requestBody);
@@ -267,7 +219,7 @@ export class MCPFeedbackServer extends EventEmitter {
         }
     }
 
-    private async handleGetRequest(req: any, res: any): Promise<void> {
+    private async handleGetRequest(req: IncomingMessage, res: ServerResponse): Promise<void> {
         const sessionId = req.headers['mcp-session-id'] as string | undefined;
         
         if (!sessionId || !this.transports[sessionId]) {
@@ -280,7 +232,7 @@ export class MCPFeedbackServer extends EventEmitter {
         await transport.handleRequest(req, res);
     }
 
-    private async handleDeleteRequest(req: any, res: any): Promise<void> {
+    private async handleDeleteRequest(req: IncomingMessage, res: ServerResponse): Promise<void> {
         const sessionId = req.headers['mcp-session-id'] as string | undefined;
         
         if (!sessionId || !this.transports[sessionId]) {
@@ -318,6 +270,16 @@ export class MCPFeedbackServer extends EventEmitter {
             }
         }
 
+        // Clear pending requests
+        for (const [requestId, pending] of this.pendingRequests) {
+            clearTimeout(pending.timer);
+            pending.reject(new Error('Server shutting down'));
+        }
+        this.pendingRequests.clear();
+
+        // Close SSE server
+        await mcpSSEServer.cleanup();
+
         if (this.server) {
             this.server.close();
             this.server = null;
@@ -335,7 +297,9 @@ export class MCPFeedbackServer extends EventEmitter {
      * Get all active session IDs
      */
     getActiveSessions(): string[] {
-        return Object.keys(this.transports);
+        const streamSessions = Object.keys(this.transports);
+        const sseSessions = mcpSSEServer.getActiveSessions();
+        return [...streamSessions, ...sseSessions];
     }
 
     /**
